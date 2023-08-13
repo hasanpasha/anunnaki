@@ -69,7 +69,7 @@ class ExtensionManager:
         if not self.download_extension(ext.new_update):
             return False
 
-        ext.version = ext.new_update.id
+        ext.version = ext.new_update.version
         ext.name = ext.new_update.name
         ext.base_url = ext.new_update.base_url
         ext.lang = ext.new_update.lang
