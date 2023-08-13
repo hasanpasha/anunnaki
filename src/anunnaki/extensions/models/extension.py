@@ -49,4 +49,7 @@ class Extension:
         return tuple(map(lambda e: int(e), version.split('.')))
 
     def __eq__(self, other: 'Extension') -> bool:
+        if other == None:
+            return False
+
         return self.id == other.id
