@@ -53,7 +53,7 @@ class ExtensionManager:
             return False
 
         ext.installed = True
-        ext.local_path = ext.id
+        ext.local_path = ext.id.replace('.', '_')
 
         # update db
         result = self.__save_to_local_db([ext])
@@ -86,7 +86,7 @@ class ExtensionManager:
         if not os.path.exists(EXTS_DIR):
             os.mkdir(EXTS_DIR)
 
-        download_path = os.path.join(EXTS_DIR, ext.id)
+        download_path = os.path.join(EXTS_DIR, ext.id.replace('.', '_'))
         if os.path.exists(download_path) and not force:
             return False
         if ext.repo_type == RepoType.GIT:
