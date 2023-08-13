@@ -35,7 +35,7 @@ class Data:
             repo_type CHAR(3),
             installed BOOLEAN NOT NULL,
             UNIQUE(id)
-        ) IF NOT EXIST;'''
+        );'''
         return self.execute(extension_table_query)
 
     def update_extension(self, ext: Extension) -> SQLResult:
