@@ -1,0 +1,4 @@
+__pycache__
+data.session.sql
+.vscode/settings.json
+src/anunnaki/data
