@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from enum import Enum
+import logging
 
 
 class RepoType(Enum):
@@ -46,6 +47,7 @@ class Extension:
 
     @staticmethod
     def serialize_version(version: str) -> tuple[int, int, int]:
+        logging.debug(f"serializing {version}")
         return tuple(map(lambda e: int(e), version.split('.')))
 
     def __eq__(self, other: 'Extension') -> bool:
