@@ -7,7 +7,11 @@ from anunnaki.extensions import SOURCES_DIR, INDEX
 from anunnaki.data.data import Data
 from anunnaki import DATA_DIR, EXTS_DIR
 
+from anunnaki_source.source import Source
+import importlib
+
 import os
+import sys
 import logging
 
 
@@ -21,6 +25,22 @@ class ExtensionManager:
     @property
     def extensions(self) -> list[Extension]:
         return self.__local_extensions
+
+    def load_extension(self, ext: Extension) -> Source:
+        if not ext.installed:
+            return
+
+        module_name = ext.local_path
+        if EXTS_DIR not in sys.path:
+            sys.path.append(EXTS_DIR)
+
+        logging.debug(f"loading {module_name}")
+        module = importlib.import_module(module_name)
+
+        klass: Source = module.load_extension()
+        logging.debug(f"loaded {klass.id}")
+
+        return klass
 
     def check_for_updates(self) -> bool:
         for online_ext in self.__online_extensions:
