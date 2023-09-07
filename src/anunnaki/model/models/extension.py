@@ -1,25 +1,20 @@
 from dataclasses import dataclass
-from enum import Enum
 import logging
-
-
-class RepoType(Enum):
-    GIT = 'git'
-    HTTP = 'htp'
-
 
 @dataclass
 class Extension:
-    id: str
+    id: int
+    pkg: str
     name: str
-    lang: str
     version: str
-    repo_type: RepoType
-    installed: bool = False
-    source_url: str = None
+    lang: str
     base_url: str = None
-    local_path: str = None
-    new_update: 'Extension' = None
+    installed: bool = False
+    has_new_update: bool = False
+    zip_file: str = None
+    zip_url: str = None
+    icon_file: str = None
+    icon_url: str = None
 
     @property
     def has_updates(self) -> bool:
@@ -54,4 +49,4 @@ class Extension:
         if other == None:
             return False
 
-        return self.id == other.id
+        return str(self.id) == str(other.id)

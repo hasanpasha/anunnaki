@@ -12,15 +12,15 @@ import logging
 
 
 class ExtensionManager:
-    extensions = []
-
-    def __init__(self) -> None:
-        self.load_local_extensions()
-        self.load_online_extensions()
-
+    extensions: list[Extension]
+    
     @property
     def extensions(self) -> list[Extension]:
-        return self.__local_extensions
+        return self.extensions
+
+    @extensions.setter
+    def extensions(self, exts: list[Extension]):
+        self.extensions = exts
 
     def check_for_updates(self) -> bool:
         for online_ext in self.__online_extensions:
@@ -82,7 +82,6 @@ class ExtensionManager:
             self.load_local_extensions()
 
     def download_extension(self, ext: Extension, force: bool = True) -> bool:
-
         if not os.path.exists(EXTS_DIR):
             os.mkdir(EXTS_DIR)
 
@@ -100,6 +99,10 @@ class ExtensionManager:
         self.__local_extensions = []
         with Data() as data:
             self.__local_extensions = data.list_extensions()
+
+    def load_sources(self) -> list[Extension]:
+        with Data() as data:
+            return data.load_sources()
 
     def load_online_extensions(self) -> None:
         self.__online_extensions = []

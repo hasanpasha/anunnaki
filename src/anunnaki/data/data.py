@@ -64,7 +64,15 @@ class Data:
         sql = '''SELECT id, name, language, version, repo_type,
           installed, source_url, base_url, local_path FROM extensions'''
         result = self.execute(sql)
-        if not bool(result):
+        if not result:
+            return []
+        return list(map(lambda e: self.__db_to_extension(e), result.result.fetchall()))
+    
+    def load_sources(self) -> list[Extension]:
+        sql = '''SELECT id, name, language, version, repo_type,
+          installed, source_url, base_url, local_path FROM extensions WHERE installed==True'''
+        result = self.execute(sql)
+        if not result:
             return []
         return list(map(lambda e: self.__db_to_extension(e), result.result.fetchall()))
 

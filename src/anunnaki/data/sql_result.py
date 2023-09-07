@@ -1,11 +1,12 @@
 from dataclasses import dataclass
-from sqlite3 import Cursor, Error
+from sqlite3 import Error
+from typing import Any
 
 
 @dataclass
 class SQLResult:
     succeed: bool
-    result: Cursor = None
+    result: Any = None
     error: Error = None
 
     def __bool__(self) -> bool:
