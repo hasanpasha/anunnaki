@@ -1,5 +1,5 @@
 from PySide6.QtWidgets import QWidget, QListWidgetItem, QMessageBox
-from PySide6.QtCore import QModelIndex, Qt
+from PySide6.QtCore import QModelIndex, Qt, Signal
 
 from anunnaki.view.extensions_ui import Ui_ext_widget
 from anunnaki.extensions.models import Extension
@@ -12,6 +12,8 @@ class ExtensionRoles(enum.IntEnum):
     ExtensionDataRole = 1
 
 class ExtensionsView(QWidget):
+    open_source = Signal(Extension)
+
     __operating = []
 
     def __init__(self, controller, model, parent: QWidget = None):
@@ -29,6 +31,8 @@ class ExtensionsView(QWidget):
         self.__ui.ext_tabs.currentChanged.connect(self.on_ext_tabs_switch)
         self.__ui.extensions_list.clicked.connect(self.on_extension_click)
         self.__ui.extensions_list.currentRowChanged.connect(self.on_extension_row_changed)
+
+        self.__ui.sources_list.clicked.connect(self.on_source_clicked)
 
         self.__ui.ext_install.clicked.connect(self.install_extension)
         self.__ui.ext_uninstall.clicked.connect(self.uninstall_extension)
@@ -79,6 +83,11 @@ class ExtensionsView(QWidget):
         self.__ui.ext_install.setEnabled((not data.installed) & (not installing))
         self.__ui.ext_uninstall.setEnabled(data.installed & (not installing))
         self.__ui.ext_update.setEnabled(data.has_new_update & (not installing))
+
+    def on_source_clicked(self, index: QModelIndex):
+        extension = index.data(ExtensionRoles.ExtensionDataRole)
+        if extension:
+            self.open_source.emit(extension)
 
     def on_operation_end(self, ext: Extension):
         for op in self.__operating:

@@ -31,11 +31,8 @@
      <number>0</number>
     </property>
     <item>
-     <widget class="QTabWidget" name="main">
-      <widget class="QWidget" name="home" native="true">
-       <attribute name="title">
-        <string>Home</string>
-       </attribute>
+     <widget class="QStackedWidget" name="main">
+      <widget class="QWidget" name="home">
        <layout class="QVBoxLayout" name="verticalLayout">
         <property name="spacing">
          <number>0</number>
@@ -68,10 +65,47 @@
      <height>22</height>
     </rect>
    </property>
+   <widget class="QMenu" name="menuTools">
+    <property name="title">
+     <string>Tools</string>
+    </property>
+    <addaction name="extension_action"/>
+   </widget>
+   <widget class="QMenu" name="menuFile">
+    <property name="title">
+     <string>File</string>
+    </property>
+    <addaction name="quit_action"/>
+   </widget>
+   <addaction name="menuFile"/>
+   <addaction name="menuTools"/>
   </widget>
   <action name="actionExtensions">
    <property name="text">
     <string>Extensions</string>
+   </property>
+  </action>
+  <action name="extension_action">
+   <property name="text">
+    <string>Extensions</string>
+   </property>
+  </action>
+  <action name="quit_action">
+   <property name="icon">
+    <iconset theme="application-exit">
+     <normaloff>../../../../../../../../.designer/backup</normaloff>../../../../../../../../.designer/backup</iconset>
+   </property>
+   <property name="text">
+    <string>Quit</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Q</string>
+   </property>
+   <property name="shortcutContext">
+    <enum>Qt::ApplicationShortcut</enum>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::QuitRole</enum>
    </property>
   </action>
  </widget>
