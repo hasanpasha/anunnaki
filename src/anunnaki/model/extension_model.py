@@ -82,5 +82,8 @@ class ExtensionsModel(QObject):
         self.operation_ended.emit(ext)
         self.loading.emit(False)
 
+    def start_loading(self):
+        self.loading.emit(True)
+
     def emit_error(self, error):
         self.error_occured.emit(str(error))
