@@ -87,3 +87,4 @@ class ExtensionsModel(QObject):
 
     def emit_error(self, error):
         self.error_occured.emit(str(error))
+        self.loading.emit(False)
