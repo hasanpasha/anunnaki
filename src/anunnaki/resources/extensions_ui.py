@@ -79,6 +79,11 @@ class Ui_ext_widget(object):
 
         self.horizontalLayout.addItem(self.horizontalSpacer)
 
+        self.ext_refresh = QPushButton(self.ext_extensions)
+        self.ext_refresh.setObjectName(u"ext_refresh")
+
+        self.horizontalLayout.addWidget(self.ext_refresh)
+
 
         self.verticalLayout_2.addLayout(self.horizontalLayout)
 
@@ -101,6 +106,7 @@ class Ui_ext_widget(object):
         self.ext_install.setText(QCoreApplication.translate("ext_widget", u"install", None))
         self.ext_uninstall.setText(QCoreApplication.translate("ext_widget", u"uninstall", None))
         self.ext_update.setText(QCoreApplication.translate("ext_widget", u"update", None))
+        self.ext_refresh.setText(QCoreApplication.translate("ext_widget", u"refresh", None))
         self.ext_tabs.setTabText(self.ext_tabs.indexOf(self.ext_extensions), QCoreApplication.translate("ext_widget", u"extensions", None))
     # retranslateUi
 

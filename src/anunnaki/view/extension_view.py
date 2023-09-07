@@ -33,6 +33,7 @@ class ExtensionsView(QWidget):
         self.__ui.ext_install.clicked.connect(self.install_extension)
         self.__ui.ext_uninstall.clicked.connect(self.uninstall_extension)
         self.__ui.ext_update.clicked.connect(self.update_extension)
+        self.__ui.ext_refresh.clicked.connect(self.refresh_extensions)
 
         self.__model.sources_changed.connect(self.update_sources)
         self.__model.extensions_changed.connect(self.update_extensions)
@@ -112,6 +113,9 @@ class ExtensionsView(QWidget):
         if indx:
             ext = indx.data(ExtensionRoles.ExtensionDataRole)
             logging.debug(ext)
+
+    def refresh_extensions(self):
+        self.__controller.load_extensions(True)
 
     def update_extensions(self, exts: list[Extension]):
         self.__ui.extensions_list.clear()
