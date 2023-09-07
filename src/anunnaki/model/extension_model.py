@@ -53,8 +53,7 @@ class ExtensionsModel(QObject):
         for newext in exts:
             for i, ext in enumerate(current_exts):
                 if newext == ext:
-                    if ext.is_older_version(ext):
-                        current_exts[i] = newext
+                    current_exts[i] = newext
                     break
             else:
                 current_exts.append(newext)
@@ -62,8 +61,11 @@ class ExtensionsModel(QObject):
         self.extensions = current_exts
         self.loading.emit(False)
 
-    def mark_extension(self, ext: Extension, installed: bool = False):
-        ext.installed = installed
+    def mark_extension(self, ext: Extension, installed: bool = None, has_update: bool = None):
+        if installed != None:
+            ext.installed = installed
+        if has_update != None:
+            ext.has_new_update = has_update
         self.update_extensions([ext])
 
     def add_source(self, ext: Extension):
@@ -82,9 +84,22 @@ class ExtensionsModel(QObject):
         self.operation_ended.emit(ext)
         self.loading.emit(False)
 
+    def update_source(self, ext: Extension):
+        for i, localext in enumerate(self.sources):
+            if localext == ext:
+                self.sources[i] = ext
+                break
+        self.sources_changed.emit(self.sources)
+
+        self.mark_extension(ext, has_update=False)
+        self.operation_ended.emit(ext)
+        self.loading.emit(False)
+
     def start_loading(self):
         self.loading.emit(True)
 
-    def emit_error(self, error):
-        self.error_occured.emit(str(error))
+    def emit_error(self, error, ext: Extension = None):
         self.loading.emit(False)
+        if ext:
+            self.operation_ended.emit(ext)
+        self.error_occured.emit(str(error))

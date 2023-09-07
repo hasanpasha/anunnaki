@@ -8,6 +8,8 @@ from anunnaki.controller import repos as repos_loader
 from anunnaki.controller.utils.downloader import FileDownloader
 from anunnaki.controller.utils.extract_file import extract_file
 
+from typing import Callable
+
 import logging
 import json
 import os
@@ -22,7 +24,7 @@ class ExtensionsController(QObject):
 
         self.__nam = QNetworkAccessManager(self)
         # TODO: make timeout configurable 
-        self.__nam.setTransferTimeout(10)
+        self.__nam.setTransferTimeout(5000) # 5s 
         self.__nam.finished.connect(self.__collect_replies)
 
         # print(self.__model.table_exists)
@@ -44,25 +46,6 @@ class ExtensionsController(QObject):
                                   lambda _: setattr(self.__model, "table_exists", True),
                                 self.__model.emit_error)
 
-    def on_ext_download_finished(self, pkgpath, ext: Extension):
-        dest = os.path.join(EXTS_DIR, ext.lang, ext.pkg)
-        if not extract_file(pkgpath, dest):
-            return
-        self.add_source(ext)
-        
-    def add_source(self, ext: Extension):
-        query = f'''INSERT INTO extensions(id, pkg, name, lang, version, base_url) 
-        VALUES ({ext.id}, "{ext.pkg}", "{ext.name}", "{ext.lang}", "{ext.version}", "{ext.base_url}")'''
-        self.__sql_thread.execute(DATA_DB, query, 
-                    lambda: self.__model.add_source(ext),
-                    self.__model.emit_error)
-        
-    def remove_source(self, ext: Extension):
-        query = f'''DELETE FROM extensions WHERE id={ext.id};'''
-        self.__sql_thread.execute(DATA_DB, query, 
-                    lambda: self.__model.remove_source(ext),
-                    self.__model.emit_error)
-
     def load_sources(self, force: bool = False):
         if not force and self.__model.sources:
             return
@@ -83,28 +66,90 @@ class ExtensionsController(QObject):
         self.__model.start_loading()
         repos = repos_loader.load_repos()
         for repo in repos:
+            logging.debug(f"loading from {repo.index_file()}")
             request = QNetworkRequest(repo.index_file())
             reply = self.__nam.get(request)
             reply.setProperty('repo', repo)
             reply.errorOccurred.connect(self.__model.emit_error)
 
-    def install_extension(self, ext: Extension):    
+    def on_ext_downloaded(self, path, ext: Extension, on_ext_extract: Callable):
+        dest = os.path.join(EXTS_DIR, ext.lang, ext.pkg)
+        if not extract_file(path, dest):
+            self.__model.emit_error(f"failed to unzip the extension {path}")
+        on_ext_extract(ext)
+        
+    def download_extensions(self, ext: Extension, on_download: Callable):
         logging.debug(f"downloading the extensions {ext.name}")
         downloader = FileDownloader(self, self.__nam)
-        downloader.finished.connect(lambda path: self.on_ext_download_finished(path, ext))
+        downloader.finished.connect(on_download)
         downloader.error_occured.connect(self.__model.emit_error)
         downloader.start_download(ext.zip_url)
+
+    def remove_extension_folder(self, ext: Extension) -> bool:
+        ext_path = os.path.join(EXTS_DIR, ext.lang, ext.pkg)
+        try:
+            shutil.rmtree(ext_path)
+        except Exception as e:
+            self.__model.emit_error(e)
+            return False
+        else:
+            return True
+
+    def add_source(self, ext: Extension):
+        query = f'''INSERT INTO extensions(id, pkg, name, lang, version, base_url) 
+        VALUES ({ext.id}, "{ext.pkg}", "{ext.name}", "{ext.lang}", "{ext.version}", "{ext.base_url}")'''
+        self.__sql_thread.execute(DATA_DB, query, 
+                    lambda: self.__model.add_source(ext),
+                    lambda error: self.__model.emit_error(error, ext))
+        
+    def remove_source(self, ext: Extension):
+        query = f'''DELETE FROM extensions WHERE id={ext.id};'''
+        self.__sql_thread.execute(DATA_DB, query, 
+                    lambda: self.__model.remove_source(ext),
+                    lambda error: self.__model.emit_error(error, ext))
+
+    def update_source(self, ext: Extension):
+        query = f'''UPDATE extensions SET pkg = "{ext.pkg}", name = "{ext.name}", lang = "{ext.lang}",
+             version = "{ext.version}", base_url = "{ext.base_url}" WHERE id = {ext.id}'''
+        self.__sql_thread.execute(DATA_DB, query, 
+                    lambda: self.__model.update_source(ext),
+                    lambda error: self.__model.emit_error(error, ext))
+
+    def install_extension(self, ext: Extension):
+        def on_ext_downloaded(path):
+            dest = os.path.join(EXTS_DIR, ext.lang, ext.pkg)
+            if not extract_file(path, dest):
+                self.__model.emit_error(f"failed to unzip the extension {path}")
+            self.add_source(ext)
+        
+        self.download_extensions(ext, on_ext_downloaded)
     
     def uninstall_extension(self, ext: Extension):
-        ext_path = os.path.join(EXTS_DIR, ext.lang, ext.pkg)
-        shutil.rmtree(ext_path)
-        self.remove_source(ext)
+        if self.remove_extension_folder(ext):
+            self.remove_source(ext)
+
+    def update_extension(self, ext: Extension):
+        """
+        Remove the extension from the disk then download the new one and extract it 
+        and update the database at last to the new information of the extension
+        """
+        assert ext.has_new_update
+
+        def on_ext_downloaded(path):
+            dest = os.path.join(EXTS_DIR, ext.lang, ext.pkg)
+            if not self.remove_extension_folder(ext):
+                return
+            if not extract_file(path, dest):
+                self.__model.emit_error(f"failed to unzip the extension {path}")
+            self.update_source(ext)
+
+        self.download_extensions(ext, on_ext_downloaded)
 
     def __collect_replies(self, reply: QNetworkReply):
         repo: Repo = reply.property('repo')
-        
+
         if repo:
-            if reply.error:
+            if reply.error() != QNetworkReply.NetworkError.NoError:
                 return
             
             logging.debug(f"collecting extensions: {reply.request().url().url()}")
@@ -131,6 +176,7 @@ class ExtensionsController(QObject):
                         break
 
                 exts.append(ext)
+            logging.debug(exts)
 
             self.__model.update_extensions(exts)
 

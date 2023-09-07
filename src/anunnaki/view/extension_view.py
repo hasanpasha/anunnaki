@@ -35,8 +35,8 @@ class ExtensionsView(QWidget):
         self.__ui.ext_update.clicked.connect(self.update_extension)
         self.__ui.ext_refresh.clicked.connect(self.refresh_extensions)
 
-        self.__model.sources_changed.connect(self.update_sources)
-        self.__model.extensions_changed.connect(self.update_extensions)
+        self.__model.sources_changed.connect(self.on_sources_update)
+        self.__model.extensions_changed.connect(self.on_extensions_update)
         self.__model.operation_ended.connect(self.on_operation_end)
         self.__model.error_occured.connect(self.on_error)
         self.__model.loading.connect(self.update_loading)
@@ -87,6 +87,11 @@ class ExtensionsView(QWidget):
                 self.__operating.remove(op)
                 break
 
+    def set_extension_buttons_enable(self, enabled: bool = False):
+        self.__ui.ext_install.setEnabled(enabled)
+        self.__ui.ext_uninstall.setEnabled(enabled)
+        self.__ui.ext_update.setEnabled(enabled)
+    
     def install_extension(self):
         indx = self.__ui.extensions_list.currentIndex()
         if indx:
@@ -95,15 +100,10 @@ class ExtensionsView(QWidget):
             self.__operating.append((ext, indx))
             self.__controller.install_extension(ext)
 
-    def set_extension_buttons_enable(self, enabled: bool = False):
-        self.__ui.ext_install.setEnabled(enabled)
-        self.__ui.ext_uninstall.setEnabled(enabled)
-        self.__ui.ext_update.setEnabled(enabled)
-
     def uninstall_extension(self):
         indx = self.__ui.extensions_list.currentIndex()
         if indx:
-            self.set_extension_buttons_enable()
+            self.set_extension_buttons_enable(False)
             ext = indx.data(ExtensionRoles.ExtensionDataRole)
             self.__operating.append((ext, indx))
             self.__controller.uninstall_extension(ext)
@@ -111,13 +111,15 @@ class ExtensionsView(QWidget):
     def update_extension(self):
         indx = self.__ui.extensions_list.currentIndex()
         if indx:
+            self.set_extension_buttons_enable(False)
             ext = indx.data(ExtensionRoles.ExtensionDataRole)
-            logging.debug(ext)
+            self.__operating.append((ext, indx))
+            self.__controller.update_extension(ext)
 
     def refresh_extensions(self):
         self.__controller.load_extensions(True)
 
-    def update_extensions(self, exts: list[Extension]):
+    def on_extensions_update(self, exts: list[Extension]):
         self.__ui.extensions_list.clear()
 
         for ext in exts:
@@ -125,7 +127,7 @@ class ExtensionsView(QWidget):
             item.setData(ExtensionRoles.ExtensionDataRole, ext)
             self.__ui.extensions_list.addItem(item)  
 
-    def update_sources(self, sources: list[Extension]):
+    def on_sources_update(self, sources: list[Extension]):
         self.__ui.sources_list.clear()
 
         for source in sources:
