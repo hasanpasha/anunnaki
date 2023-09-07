@@ -38,7 +38,6 @@ class ExtensionsController(QObject):
             self.load_extensions(force=True)
 
     def setup_table(self):
-        logging.debug("creating table")
         query = '''CREATE TABLE IF NOT EXISTS extensions(
             id INTEGER NOT NULL PRIMARY KEY UNIQUE,
             pkg TEXT NOT NULL,
@@ -171,7 +170,7 @@ class ExtensionsController(QObject):
                 ext.icon_file=repo.icon_file(ext)
                 ext.icon_url=repo.icon_url(ext)
 
-                # Check if the extension is installed
+                # Check if the extension is installed and has_new_update
                 for src in self.__model.sources:
                     if ext == src:
                         ext.installed = True
