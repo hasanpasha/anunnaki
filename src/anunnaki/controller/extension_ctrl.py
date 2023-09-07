@@ -31,6 +31,12 @@ class ExtensionsController(QObject):
         if not self.__model.table_exists:
             self.setup_table()
 
+        if not self.__model.sources:
+            self.load_sources(force=True)
+        
+        if not self.__model.extensions:
+            self.load_extensions(force=True)
+
     def setup_table(self):
         logging.debug("creating table")
         query = '''CREATE TABLE IF NOT EXISTS extensions(
