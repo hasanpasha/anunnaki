@@ -19,8 +19,10 @@ class ExtensionsController(QObject):
 
         self.__model = model
         self.__sql_thread = SQLThread(self)
+
         self.__nam = QNetworkAccessManager(self)
-        self.__nam.setTransferTimeout(1)
+        # TODO: make timeout configurable 
+        self.__nam.setTransferTimeout(10)
         self.__nam.finished.connect(self.__collect_replies)
 
         # print(self.__model.table_exists)
