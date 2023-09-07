@@ -30,6 +30,9 @@ class Ui_ext_widget(object):
         self.verticalLayout.setContentsMargins(0, 0, 0, 0)
         self.ext_tabs = QTabWidget(ext_widget)
         self.ext_tabs.setObjectName(u"ext_tabs")
+        self.ext_tabs.setStyleSheet(u"QTabWidget::tab-bar {\n"
+"    alignment: center;\n"
+"}")
         self.ext_tabs.setTabPosition(QTabWidget.North)
         self.ext_tabs.setUsesScrollButtons(True)
         self.ext_sources = QWidget()
@@ -94,7 +97,7 @@ class Ui_ext_widget(object):
 
         self.retranslateUi(ext_widget)
 
-        self.ext_tabs.setCurrentIndex(1)
+        self.ext_tabs.setCurrentIndex(0)
 
 
         QMetaObject.connectSlotsByName(ext_widget)

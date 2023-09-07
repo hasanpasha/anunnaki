@@ -97,7 +97,7 @@ class Ui_ext_widget(object):
 
         self.retranslateUi(ext_widget)
 
-        self.ext_tabs.setCurrentIndex(1)
+        self.ext_tabs.setCurrentIndex(0)
 
 
         QMetaObject.connectSlotsByName(ext_widget)

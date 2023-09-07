@@ -5,6 +5,10 @@ from anunnaki.view.main_view_ui import Ui_MainWindow
 from anunnaki.view.extension_view import ExtensionsView
 from anunnaki.controller.extension_ctrl import ExtensionsController
 from anunnaki.model.extension_model import ExtensionsModel
+from anunnaki.view.browse_view import BrowseView
+from anunnaki.controller.browse_ctrl import BrowseController
+from anunnaki.model.browse_model import BrowseModel
+
 
 import logging
 
@@ -25,9 +29,12 @@ class MainView(QMainWindow):
         self.ext_model = ExtensionsModel()
         self.ext_ctrl = ExtensionsController(self.ext_model)
         self.ext_view = ExtensionsView(self.ext_ctrl, self.ext_model, self)
-        self.ext_view.open_source.connect(lambda e: logging.debug(e))
-
         self.ui.main.addWidget(self.ext_view)
+        
+        self.browse_model = BrowseModel()
+        self.browse_ctrl = BrowseController(self.browse_model)
+        self.browse_view = BrowseView(self.browse_ctrl, self.browse_model, self)
+        self.ui.main.addWidget(self.browse_view)
     
     def on_extensions_clicked(self):
         self.ui.main.setCurrentWidget(self.ext_view)
@@ -36,12 +43,11 @@ class MainView(QMainWindow):
         self.ui.extension_action.triggered.connect(self.on_extensions_clicked)
         self.ui.quit_action.triggered.connect(self.close)
 
-        # UI signals
-        # self.ui.load_extensions.clicked.connect(self.controller.load_extensions)
+        self.ext_view.open_source.connect(self.on_open_source)
 
-
-        # model signals
-        self.model.extensions_changed.connect(self.print_exts)
+    def on_open_source(self, ext):
+        self.ui.main.setCurrentWidget(self.browse_view)
+        self.browse_ctrl.open_source(ext)
 
     def print_exts(self, exts):
         print(exts)
