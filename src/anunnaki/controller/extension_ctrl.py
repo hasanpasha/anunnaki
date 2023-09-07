@@ -20,6 +20,7 @@ class ExtensionsController(QObject):
         self.__model = model
         self.__sql_thread = SQLThread(self)
         self.__nam = QNetworkAccessManager(self)
+        self.__nam.setTransferTimeout(1)
         self.__nam.finished.connect(self.__collect_replies)
 
         # print(self.__model.table_exists)
@@ -64,8 +65,7 @@ class ExtensionsController(QObject):
         if not force and self.__model.sources:
             return
         
-        self.__model.loading.emit(True)
-
+        self.__model.start_loading()
         def on_result(result):
             exts = [ExtensionsController.serialize_extension(ext)
                     for ext in result]
@@ -78,8 +78,7 @@ class ExtensionsController(QObject):
         if not force and self.__model.extensions:
             return
 
-        self.__model.loading.emit(True)
-
+        self.__model.start_loading()
         repos = repos_loader.load_repos()
         for repo in repos:
             request = QNetworkRequest(repo.index_file())
@@ -103,6 +102,9 @@ class ExtensionsController(QObject):
         repo: Repo = reply.property('repo')
         
         if repo:
+            if reply.error:
+                return
+            
             logging.debug(f"collecting extensions: {reply.request().url().url()}")
             data = json.loads(reply.readAll().data())
             raw_exts = [ExtensionsController.serialize_extension(ext)
