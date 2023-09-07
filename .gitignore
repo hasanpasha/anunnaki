@@ -3,3 +3,4 @@ data.session.sql
 .vscode/settings.json
 src/anunnaki/data/data.db
 src/anunnaki/data/extensions
+.python-version
