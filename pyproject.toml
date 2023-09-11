@@ -13,6 +13,7 @@ anunnaki-source = {git = "https://github.com/hasanpasha/anunnaki-source.git", re
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.4.2"
+pytest-qt = "^4.2.0"
 
 [build-system]
 requires = ["poetry-core"]
