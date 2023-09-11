@@ -1,9 +1,10 @@
 from dataclasses import dataclass
 import logging
 
+
 @dataclass
 class Extension:
-    id: int
+    id: int   # hash(lang_pkg)
     pkg: str
     name: str
     version: str
