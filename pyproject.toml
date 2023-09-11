@@ -1,22 +1,19 @@
-[build-system]
-requires = ["setuptools>=61.0"]
-build-backend = "setuptools.build_meta"
-
-[project]
-name = "anunnaki_source"
-version = "0.0.1"
-authors = [
-  { name="Hasan Pasha", email="bashahsn22@gmail.com" },
-]
-description = "source lib that extensions depend on"
+[tool.poetry]
+name = "anunnaki"
+version = "0.1.0"
+description = ""
+authors = ["hasna pasha <38372270+hasanpasha@users.noreply.github.com>"]
 readme = "README.md"
-requires-python = ">=3.10"
-classifiers = [
-    "Programming Language :: Python :: 3",
-    "License :: OSI Approved :: MIT License",
-    "Operating System :: OS Independent",
-]
+packages = [{include = "anunnaki", from = "src"}]
 
-[project.urls]
-"Homepage" = "https://github.com/hasanpasha/anunnaki-source"
-"Bug Tracker" = "https://github.com/hasanpasha/anunnaki-source/issues"
+[tool.poetry.dependencies]
+python = "<3.12,>=3.7"
+pyside6 = "^6.5.2"
+anunnaki-source = {git = "https://github.com/hasanpasha/anunnaki-source.git", rev = "0.1.0"}
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.4.2"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
