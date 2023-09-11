@@ -1,18 +1,30 @@
 import pytest
 
-from anunnaki.extensions.models.extension import Extension
+from anunnaki.extensions.models import Extension
 
 
 @pytest.fixture
 def ext1() -> Extension:
-    return Extension('cinemana', 'shabakaty.cinemana2', 'en',
-                     '0.0.1', 'git', False, '//', 'http//')
+    return Extension(
+        id=40113167690652825,
+        pkg='shabakaty_cinemana',
+        name='cinemana',
+        version='0.0.1',
+        lang='en',
+        base_url='https://cinemana.shabakaty.com'
+    )
 
 
 @pytest.fixture
 def ext2() -> Extension:
-    return Extension('cinemana', 'shabakaty.cinemana2', 'en',
-                     '0.0.1', 'git', False, '//', 'http//')
+    return Extension(
+        id=40113167690652825,
+        pkg='shabakaty_cinemana',
+        name='cinemana',
+        version='0.0.1',
+        lang='en',
+        base_url='https://cinemana.shabakaty.com'
+    )
 
 
 def test_equals(ext1: Extension, ext2: Extension):
@@ -20,7 +32,7 @@ def test_equals(ext1: Extension, ext2: Extension):
 
 
 def test_not_equal(ext1: Extension, ext2: Extension):
-    ext1.id = f"{ext1.id}2"
+    ext2.id += 1
     assert ext1 != ext2
 
 
