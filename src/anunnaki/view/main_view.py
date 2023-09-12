@@ -1,7 +1,7 @@
 from PySide6.QtWidgets import QMainWindow
 from PySide6.QtCore import Slot
 
-from anunnaki.view.main_view_ui import Ui_MainWindow
+from anunnaki.view.main_ui import Ui_MainWindow
 from anunnaki.view.extension_view import ExtensionsView
 from anunnaki.controller.extension_ctrl import ExtensionsController
 from anunnaki.model.extension_model import ExtensionsModel
