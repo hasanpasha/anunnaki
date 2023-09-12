@@ -9,7 +9,7 @@ packages = [{include = "anunnaki", from = "src"}]
 [tool.poetry.dependencies]
 python = "<3.12,>=3.7"
 pyside6 = "^6.5.2"
-anunnaki-source = {git = "https://github.com/hasanpasha/anunnaki-source.git", rev = "0.1.0"}
+anunnaki-source = {git = "https://github.com/hasanpasha/anunnaki-source.git"}
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.4.2"
