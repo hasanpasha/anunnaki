@@ -15,6 +15,7 @@ import json
 import os
 import shutil
 
+
 class ExtensionsController(QObject):
     def __init__(self, model):
         super().__init__()
@@ -24,7 +25,7 @@ class ExtensionsController(QObject):
 
         self.__nam = QNetworkAccessManager(self)
         # TODO: make timeout configurable 
-        self.__nam.setTransferTimeout(5000) # 5s 
+        self.__nam.setTransferTimeout(5000)  # 5s
         self.__nam.finished.connect(self.__collect_replies)
 
         # print(self.__model.table_exists)
@@ -33,9 +34,10 @@ class ExtensionsController(QObject):
 
         if not self.__model.sources:
             self.load_sources(force=True)
-        
-        if not self.__model.extensions:
-            self.load_extensions(force=True)
+
+        #TODO: update after source load
+        # if not self.__model.extensions:
+        #     self.load_extensions(force=True)
 
     def setup_table(self):
         query = '''CREATE TABLE IF NOT EXISTS extensions(
@@ -49,12 +51,12 @@ class ExtensionsController(QObject):
         self.__sql_thread.execute(DATA_DB, query,
                                   # set the model property to true on success  
                                   lambda _: setattr(self.__model, "table_exists", True),
-                                self.__model.emit_error)
+                                  self.__model.emit_error)
 
     def load_sources(self, force: bool = False):
         if not force and self.__model.sources:
             return
-        
+
         self.__model.start_loading()
         def on_result(result):
             exts = [ExtensionsController.serialize_extension(ext)
@@ -82,7 +84,7 @@ class ExtensionsController(QObject):
         if not extract_file(path, dest):
             self.__model.emit_error(f"failed to unzip the extension {path}")
         on_ext_extract(ext)
-        
+
     def download_extensions(self, ext: Extension, on_download: Callable):
         logging.debug(f"downloading the extensions {ext.name}")
         downloader = FileDownloader(self, self.__nam)
@@ -103,22 +105,22 @@ class ExtensionsController(QObject):
     def add_source(self, ext: Extension):
         query = f'''INSERT INTO extensions(id, pkg, name, lang, version, base_url) 
         VALUES ({ext.id}, "{ext.pkg}", "{ext.name}", "{ext.lang}", "{ext.version}", "{ext.base_url}")'''
-        self.__sql_thread.execute(DATA_DB, query, 
-                    lambda: self.__model.add_source(ext),
-                    lambda error: self.__model.emit_error(error, ext))
-        
+        self.__sql_thread.execute(DATA_DB, query,
+                                  lambda: self.__model.add_source(ext),
+                                  lambda error: self.__model.emit_error(error, ext))
+
     def remove_source(self, ext: Extension):
         query = f'''DELETE FROM extensions WHERE id={ext.id};'''
-        self.__sql_thread.execute(DATA_DB, query, 
-                    lambda: self.__model.remove_source(ext),
-                    lambda error: self.__model.emit_error(error, ext))
+        self.__sql_thread.execute(DATA_DB, query,
+                                  lambda: self.__model.remove_source(ext),
+                                  lambda error: self.__model.emit_error(error, ext))
 
     def update_source(self, ext: Extension):
         query = f'''UPDATE extensions SET pkg = "{ext.pkg}", name = "{ext.name}", lang = "{ext.lang}",
              version = "{ext.version}", base_url = "{ext.base_url}" WHERE id = {ext.id}'''
-        self.__sql_thread.execute(DATA_DB, query, 
-                    lambda: self.__model.update_source(ext),
-                    lambda error: self.__model.emit_error(error, ext))
+        self.__sql_thread.execute(DATA_DB, query,
+                                  lambda: self.__model.update_source(ext),
+                                  lambda error: self.__model.emit_error(error, ext))
 
     def install_extension(self, ext: Extension):
         def on_ext_downloaded(path):
@@ -126,9 +128,9 @@ class ExtensionsController(QObject):
             if not extract_file(path, dest):
                 self.__model.emit_error(f"failed to unzip the extension {path}")
             self.add_source(ext)
-        
+
         self.download_extensions(ext, on_ext_downloaded)
-    
+
     def uninstall_extension(self, ext: Extension):
         if self.remove_extension_folder(ext):
             self.remove_source(ext)
@@ -156,19 +158,19 @@ class ExtensionsController(QObject):
         if repo:
             if reply.error() != QNetworkReply.NetworkError.NoError:
                 return
-            
+
             logging.debug(f"collecting extensions: {reply.request().url().url()}")
             data = json.loads(reply.readAll().data())
             raw_exts = [ExtensionsController.serialize_extension(ext)
-                    for ext in data]
-            
+                        for ext in data]
+
             exts = []
             for ext in raw_exts:
                 ext.installed = False
-                ext.zip_file=repo.zip_file(ext)
-                ext.zip_url=repo.zip_url(ext)
-                ext.icon_file=repo.icon_file(ext)
-                ext.icon_url=repo.icon_url(ext)
+                ext.zip_file = repo.zip_file(ext)
+                ext.zip_url = repo.zip_url(ext)
+                ext.icon_file = repo.icon_file(ext)
+                ext.icon_url = repo.icon_url(ext)
 
                 # Check if the extension is installed and has_new_update
                 for src in self.__model.sources:
@@ -188,5 +190,3 @@ class ExtensionsController(QObject):
     @staticmethod
     def serialize_extension(extension: dict) -> Extension:
         return Extension(**extension)
-
-    
