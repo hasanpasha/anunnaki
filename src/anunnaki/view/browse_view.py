@@ -1,4 +1,4 @@
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, QModelIndex, Signal
 from PySide6.QtGui import QPixmap
 from PySide6.QtWidgets import QWidget, QListWidgetItem, QListWidget
 from PySide6.QtNetwork import QNetworkReply
@@ -8,12 +8,14 @@ from anunnaki.view.browse_list import BrowseList
 from anunnaki.controller.browse_ctrl import SourceBridge
 from anunnaki.view.spinnerwidget import QtWaitingSpinner
 
-from anunnaki_source.models import MediasPage
+from anunnaki_source.models import MediasPage, Media
 
 import logging
 
 
 class BrowseView(QWidget):
+    open_media = Signal(Media)
+
     def __init__(self, controller, model, parent) -> None:
         super().__init__(parent)
 
@@ -40,6 +42,10 @@ class BrowseView(QWidget):
         self.latest_list.list_end_reached.connect(lambda: self.load_latest_medias(load_next=True))
         self.search_list.list_end_reached.connect(lambda: self.load_search_medias(load_next=True))
 
+        self.popular_list.clicked.connect(self.on_media_clicked)
+        self.latest_list.clicked.connect(self.on_media_clicked)
+        self.search_list.clicked.connect(self.on_media_clicked)
+
         self.__ui.browse_tabs.currentChanged.connect(self.load_medias)
         self.__ui.search_btn.clicked.connect(self.search_query)
 
@@ -49,6 +55,11 @@ class BrowseView(QWidget):
         self.__model.repaint_list.connect(self.repaint_list)
         self.__model.loading.connect(self.update_loading)
         self.__model.latest_supported.connect(self.update_latest_supported)
+
+    def on_media_clicked(self, index: QModelIndex):
+        media: Media = index.data(Qt.ItemDataRole.UserRole)
+        if media:
+            self.open_media.emit(media)
 
     def update_latest_supported(self, show: bool):
         logging.debug(f"SHOWING {show}")

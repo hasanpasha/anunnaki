@@ -8,6 +8,7 @@ from anunnaki.model.extension_model import ExtensionsModel
 from anunnaki.view.browse_view import BrowseView
 from anunnaki.controller.browse_ctrl import BrowseController
 from anunnaki.model.browse_model import BrowseModel
+from anunnaki_source.models import Media, Kind
 
 
 import logging
@@ -45,9 +46,17 @@ class MainView(QMainWindow):
 
         self.ext_view.open_source.connect(self.on_source_open)
 
+        self.browse_view.open_media.connect(self.on_media_open)
+
     def on_source_open(self, ext):
         self.ui.main.setCurrentWidget(self.browse_view)
         self.browse_ctrl.open_source(ext)
+
+    def on_media_open(self, media: Media):
+        if media.kind == Kind.MOVIES:
+            logging.debug(f"MOVIE {media}")
+        else:
+            logging.debug(f"SERIES {media}")
 
     def print_exts(self, exts):
         print(exts)
