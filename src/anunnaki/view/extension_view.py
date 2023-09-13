@@ -2,7 +2,7 @@ from PySide6.QtWidgets import QWidget, QListWidgetItem, QMessageBox
 from PySide6.QtCore import QModelIndex, Qt, Signal
 
 from anunnaki.view.extensions_ui import Ui_ext_widget
-from anunnaki.extensions.models import Extension
+from anunnaki.model.models import Extension
 from anunnaki.view.spinnerwidget import QtWaitingSpinner
 
 import enum

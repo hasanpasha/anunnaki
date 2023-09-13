@@ -1,5 +1,5 @@
 from PySide6.QtCore import QObject, Signal
-from anunnaki.extensions.models import Extension
+from anunnaki.model.models import Extension
 
 import logging
 
