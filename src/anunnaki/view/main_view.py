@@ -1,5 +1,4 @@
 from PySide6.QtWidgets import QMainWindow
-from PySide6.QtCore import Slot
 
 from anunnaki.view.main_ui import Ui_MainWindow
 from anunnaki.view.extension_view import ExtensionsView
@@ -11,10 +10,8 @@ from anunnaki.model.browse_model import BrowseModel
 from anunnaki.view.media_view import MediaView
 from anunnaki.controller.media_ctrl import MediaController
 from anunnaki.model.media_model import MediaModel
-from anunnaki_source.models import Media, Kind
+from anunnaki_source.models import Media
 
-
-import logging
 
 class MainView(QMainWindow):
     def __init__(self, controller, model) -> None:
