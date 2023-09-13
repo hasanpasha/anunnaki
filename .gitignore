@@ -4,3 +4,4 @@ data.session.sql
 src/anunnaki/data/data.db
 src/anunnaki/data/extensions
 .python-version
+/poetry.lock
