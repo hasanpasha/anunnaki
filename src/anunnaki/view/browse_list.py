@@ -110,5 +110,5 @@ class BrowseList(QListWidget):
 
     def on_time(self):
         # logging.debug("timer update")
-        if self.scroll.value()+2 >= self.scroll.maximum():
+        if self.scroll.value() == self.scroll.maximum() and not self.scroll.isVisible():
             self.list_end_reached.emit()
