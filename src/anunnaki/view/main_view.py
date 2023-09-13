@@ -43,9 +43,9 @@ class MainView(QMainWindow):
         self.ui.extension_action.triggered.connect(self.on_extensions_clicked)
         self.ui.quit_action.triggered.connect(self.close)
 
-        self.ext_view.open_source.connect(self.on_open_source)
+        self.ext_view.open_source.connect(self.on_source_open)
 
-    def on_open_source(self, ext):
+    def on_source_open(self, ext):
         self.ui.main.setCurrentWidget(self.browse_view)
         self.browse_ctrl.open_source(ext)
 
