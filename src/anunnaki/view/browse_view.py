@@ -85,10 +85,9 @@ class BrowseView(QWidget):
         return self.list_widget_by_index(self.__ui.browse_tabs.currentIndex())
 
     def repaint_list(self, reply: QNetworkReply):
-        logging.debug(reply.request().url().url())
         try:
+            # TODO: RETRY ON FAILURE
             readable = reply.isReadable()
-            logging.debug(f"readable {readable}")
             if not readable:
                 return
             data = reply.readAll()
@@ -96,14 +95,14 @@ class BrowseView(QWidget):
                 return
             title = reply.property('title')
             list_index: int = reply.property('list-index')
-            logging.debug(list_index)
             list_widget: QListWidget = self.list_widget_by_index(list_index)
             item: QListWidgetItem = None
 
             items: list[QListWidgetItem] = list_widget.findItems(title, Qt.MatchFlag.MatchExactly)
             if items:
                 item = items[0]
-
+            else:
+                logging.error(f"can't find {title}'s item")
             if not item or not list_widget:
                 return
             pixmap = QPixmap()
