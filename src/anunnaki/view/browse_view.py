@@ -14,7 +14,7 @@ import logging
 
 
 class BrowseView(QWidget):
-    open_media = Signal(Media)
+    open_media = Signal(Media, SourceBridge)
 
     def __init__(self, controller, model, parent) -> None:
         super().__init__(parent)
@@ -59,7 +59,7 @@ class BrowseView(QWidget):
     def on_media_clicked(self, index: QModelIndex):
         media: Media = index.data(Qt.ItemDataRole.UserRole)
         if media:
-            self.open_media.emit(media)
+            self.open_media.emit(media, self.__model.source)
 
     def update_latest_supported(self, show: bool):
         logging.debug(f"SHOWING {show}")
