@@ -20,6 +20,9 @@ class ExtensionsController(QObject):
     def __init__(self, model):
         super().__init__()
 
+        # create necessary folder
+        self.make_dirs()
+
         self.__model = model
         self.__sql_thread = SQLThread(self)
 
@@ -28,16 +31,23 @@ class ExtensionsController(QObject):
         self.__nam.setTransferTimeout(5000)  # 5s
         self.__nam.finished.connect(self.__collect_replies)
 
-        # print(self.__model.table_exists)
-        if not self.__model.table_exists:
-            self.setup_table()
-
-        if not self.__model.sources:
-            self.load_sources(force=True)
+        self.setup_table()
 
         #TODO: update after source load
         # if not self.__model.extensions:
         #     self.load_extensions(force=True)
+
+    def make_dirs(self):
+        """mkdir missing paths"""
+        paths = [EXTS_DIR]
+        for path in paths:
+            if not os.path.exists(path):
+                try:
+                    os.makedirs(path)
+                except Exception as e:
+                    self.__model.emit_error(str(Exception))
+                else:
+                    logging.info(f"created missing path: {path}")
 
     def setup_table(self):
         query = '''CREATE TABLE IF NOT EXISTS extensions(
@@ -50,7 +60,7 @@ class ExtensionsController(QObject):
         );'''
         self.__sql_thread.execute(DATA_DB, query,
                                   # set the model property to true on success  
-                                  lambda _: setattr(self.__model, "table_exists", True),
+                                  lambda _: self.load_sources(True),
                                   self.__model.emit_error)
 
     def load_sources(self, force: bool = False):
