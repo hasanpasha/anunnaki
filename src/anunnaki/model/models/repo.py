@@ -9,7 +9,7 @@ class Repo:
     url: str
 
     def index_file(self):
-        return f"{self.url}/index.json"
+        return f"{self.url}/index.min.json"
     
     def __pkg_name(self, ext: Extension):
         pkg_name = f"{ext.lang}_{ext.pkg}_v{ext.version}"
