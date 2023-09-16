@@ -18,14 +18,6 @@ class ExtensionsModel(QObject):
         super().__init__()
 
     @property
-    def table_exists(self):
-        return self.__table_exist
-
-    @table_exists.setter
-    def table_exists(self, exists: bool = False):
-        self.__table_exist = exists
-
-    @property
     def sources(self):
         return self.__sources if self.__sources != None else []
     
