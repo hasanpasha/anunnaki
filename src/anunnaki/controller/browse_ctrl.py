@@ -156,7 +156,7 @@ class BrowseController(QObject):
             page = self.__model.latest_page
 
         self.__model.set_loading(True)
-        self.__model.source.fetch_latest_media(query=query, page=page, filters=filters,
+        self.__model.source.fetch_latest_media(page=page, filters=filters,
                                                 on_result=self.__model.latest_medias,
                                                 on_error=lambda error: logging.error(error))
 
