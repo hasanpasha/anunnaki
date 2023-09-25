@@ -4,7 +4,7 @@ from PySide6.QtCore import QObject, QRunnable, Signal, QThreadPool
 from PySide6.QtNetwork import QNetworkAccessManager, QNetworkReply, QNetworkRequest
 
 from anunnaki.model.models import Extension
-from anunnaki import EXTS_DIR
+from anunnaki.constants import AppPaths
 
 from anunnaki_source import Source
 
@@ -57,10 +57,10 @@ class SourceBridge(QThreadPool):
 
     @staticmethod
     def load_source(ext: Extension):
-        if EXTS_DIR not in sys.path:
-            sys.path.append(EXTS_DIR)
-
+        if AppPaths().EXTENSIONS_PATH not in sys.path:
+            sys.path.append(AppPaths().EXTENSIONS_PATH)
         module_name = f"{ext.lang}.{ext.pkg}"
+        logging.debug(f"{AppPaths().EXTENSIONS_PATH}, {module_name}")
         module = importlib.import_module(module_name)
         klass = module.load_extension()
         return klass

@@ -3,7 +3,7 @@ from PySide6.QtNetwork import QNetworkAccessManager, QNetworkReply, QNetworkRequ
 import tinydb as tdb
 
 from anunnaki.controller.sql_worker import SQLThread
-from anunnaki import DATA_DB, EXTS_DIR
+from anunnaki.constants import AppPaths, AppFiles, DBTables
 from anunnaki.model.models import Extension, Repo
 from anunnaki.controller import repos as repos_loader
 from anunnaki.utils.downloader import FileDownloader
@@ -22,36 +22,20 @@ class ExtensionsController(QObject):
         super().__init__()
         self.__model = model
 
-        # create necessary folder
-        self.make_dirs()
-
         self.__nam = QNetworkAccessManager(self)
         # TODO: make timeout configurable 
         self.__nam.setTransferTimeout(5000)  # 5s
         self.__nam.finished.connect(self.__collect_replies)
 
-        self.load_sources()
-        if not self.__model.extensions:
-            self.load_extensions(force=True)
-
-    def make_dirs(self):
-        """mkdir missing paths"""
-        paths = [EXTS_DIR]
-        for path in paths:
-            if not os.path.exists(path):
-                try:
-                    os.makedirs(path)
-                except Exception as e:
-                    self.__model.emit_error(str(Exception))
-                else:
-                    logging.info(f"created missing path: {path}")
+    def get_ext_install_path(self, ext: Extension):
+        return os.path.join(AppPaths().EXTENSIONS_PATH, ext.lang, ext.pkg)
 
     def load_sources(self, force: bool = True):
         if not force and self.__model.sources:
             return
 
-        with tdb.TinyDB(DATA_DB) as db:
-            table = db.table("extensions")
+        with tdb.TinyDB(AppFiles().DB) as db:
+            table = db.table(DBTables.EXTENSION_TABLE)
             sources = [Extension(**ext) for ext in table.all()]
             self.__model.sources = sources
 
@@ -69,7 +53,7 @@ class ExtensionsController(QObject):
             reply.errorOccurred.connect(self.__model.emit_error)
 
     def on_ext_downloaded(self, path, ext: Extension, on_ext_extract: Callable):
-        dest = os.path.join(EXTS_DIR, ext.lang, ext.pkg)
+        dest = self.get_ext_install_path(ext)
         if not extract_file(path, dest):
             self.__model.emit_error(f"failed to unzip the extension {path}")
         on_ext_extract(ext)
@@ -82,7 +66,7 @@ class ExtensionsController(QObject):
         downloader.start_download(ext.zip_url)
 
     def remove_extension_folder(self, ext: Extension) -> bool:
-        ext_path = os.path.join(EXTS_DIR, ext.lang, ext.pkg)
+        ext_path = self.get_ext_install_path(ext)
         try:
             shutil.rmtree(ext_path)
         except Exception as e:
@@ -92,28 +76,28 @@ class ExtensionsController(QObject):
             return True
 
     def add_source(self, ext: Extension):
-        with tdb.TinyDB(DATA_DB) as db:
-            table = db.table("extensions")
+        with tdb.TinyDB(AppFiles().DB) as db:
+            table = db.table(DBTables.EXTENSION_TABLE)
             table.insert(vars(ext))
             self.__model.add_source(ext)
 
 
     def remove_source(self, ext: Extension):
-        with tdb.TinyDB(DATA_DB) as db:
-            table = db.table("extensions")
+        with tdb.TinyDB(AppFiles().DB) as db:
+            table = db.table(DBTables.EXTENSION_TABLE)
             table.remove(tdb.where('id') == ext.id)
             self.__model.remove_source(ext)
 
 
     def update_source(self, ext: Extension):
-        with tdb.TinyDB(DATA_DB) as db:
-            table = db.table("extensions")
+        with tdb.TinyDB(AppFiles().DB) as db:
+            table = db.table(DBTables.EXTENSION_TABLE)
             table.update(vars(ext), tdb.where('id') == ext.id)
             self.__model.update_source(ext)
 
     def install_extension(self, ext: Extension):
         def on_ext_downloaded(path):
-            dest = os.path.join(EXTS_DIR, ext.lang, ext.pkg)
+            dest = self.get_ext_install_path(ext)
             if not extract_file(path, dest):
                 self.__model.emit_error(f"failed to unzip the extension {path}")
             self.add_source(ext)
@@ -132,7 +116,7 @@ class ExtensionsController(QObject):
         assert ext.has_new_update
 
         def on_ext_downloaded(path):
-            dest = os.path.join(EXTS_DIR, ext.lang, ext.pkg)
+            dest = self.get_ext_install_path(ext)
             if not self.remove_extension_folder(ext):
                 return
             if not extract_file(path, dest):
