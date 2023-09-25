@@ -1,12 +1,13 @@
-from PySide6.QtCore import QObject, QUrl
+from PySide6.QtCore import QObject
 from PySide6.QtNetwork import QNetworkAccessManager, QNetworkReply, QNetworkRequest
+import tinydb as tdb
 
 from anunnaki.controller.sql_worker import SQLThread
 from anunnaki import DATA_DB, EXTS_DIR
 from anunnaki.model.models import Extension, Repo
 from anunnaki.controller import repos as repos_loader
-from anunnaki.controller.utils.downloader import FileDownloader
-from anunnaki.controller.utils.extract_file import extract_file
+from anunnaki.utils.downloader import FileDownloader
+from anunnaki.utils.extract_file import extract_file
 
 from typing import Callable
 
@@ -19,23 +20,19 @@ import shutil
 class ExtensionsController(QObject):
     def __init__(self, model):
         super().__init__()
+        self.__model = model
 
         # create necessary folder
         self.make_dirs()
-
-        self.__model = model
-        self.__sql_thread = SQLThread(self)
 
         self.__nam = QNetworkAccessManager(self)
         # TODO: make timeout configurable 
         self.__nam.setTransferTimeout(5000)  # 5s
         self.__nam.finished.connect(self.__collect_replies)
 
-        self.setup_table()
-
-        #TODO: update after source load
-        # if not self.__model.extensions:
-        #     self.load_extensions(force=True)
+        self.load_sources()
+        if not self.__model.extensions:
+            self.load_extensions(force=True)
 
     def make_dirs(self):
         """mkdir missing paths"""
@@ -49,32 +46,14 @@ class ExtensionsController(QObject):
                 else:
                     logging.info(f"created missing path: {path}")
 
-    def setup_table(self):
-        query = '''CREATE TABLE IF NOT EXISTS extensions(
-            id INTEGER NOT NULL PRIMARY KEY UNIQUE,
-            pkg TEXT NOT NULL,
-            name TEXT NOT NULL,
-            version TEXT NOT NULL,
-            lang TEXT NOT NULL,
-            base_url TEXT NOT NULL
-        );'''
-        self.__sql_thread.execute(DATA_DB, query,
-                                  # set the model property to true on success  
-                                  lambda _: self.load_sources(True),
-                                  self.__model.emit_error)
-
-    def load_sources(self, force: bool = False):
+    def load_sources(self, force: bool = True):
         if not force and self.__model.sources:
             return
 
-        self.__model.start_loading()
-        def on_result(result):
-            exts = [ExtensionsController.serialize_extension(ext)
-                    for ext in result]
-            self.__model.sources = exts
-
-        query = '''SELECT * FROM extensions'''
-        self.__sql_thread.execute(DATA_DB, query, on_result, self.__model.emit_error)
+        with tdb.TinyDB(DATA_DB) as db:
+            table = db.table("extensions")
+            sources = [Extension(**ext) for ext in table.all()]
+            self.__model.sources = sources
 
     def load_extensions(self, force: bool = False):
         if not force and self.__model.extensions:
@@ -113,24 +92,24 @@ class ExtensionsController(QObject):
             return True
 
     def add_source(self, ext: Extension):
-        query = f'''INSERT INTO extensions(id, pkg, name, lang, version, base_url) 
-        VALUES ({ext.id}, "{ext.pkg}", "{ext.name}", "{ext.lang}", "{ext.version}", "{ext.base_url}")'''
-        self.__sql_thread.execute(DATA_DB, query,
-                                  lambda: self.__model.add_source(ext),
-                                  lambda error: self.__model.emit_error(error, ext))
+        with tdb.TinyDB(DATA_DB) as db:
+            table = db.table("extensions")
+            table.insert(vars(ext))
+            self.__model.add_source(ext)
+
 
     def remove_source(self, ext: Extension):
-        query = f'''DELETE FROM extensions WHERE id={ext.id};'''
-        self.__sql_thread.execute(DATA_DB, query,
-                                  lambda: self.__model.remove_source(ext),
-                                  lambda error: self.__model.emit_error(error, ext))
+        with tdb.TinyDB(DATA_DB) as db:
+            table = db.table("extensions")
+            table.remove(tdb.where('id') == ext.id)
+            self.__model.remove_source(ext)
+
 
     def update_source(self, ext: Extension):
-        query = f'''UPDATE extensions SET pkg = "{ext.pkg}", name = "{ext.name}", lang = "{ext.lang}",
-             version = "{ext.version}", base_url = "{ext.base_url}" WHERE id = {ext.id}'''
-        self.__sql_thread.execute(DATA_DB, query,
-                                  lambda: self.__model.update_source(ext),
-                                  lambda error: self.__model.emit_error(error, ext))
+        with tdb.TinyDB(DATA_DB) as db:
+            table = db.table("extensions")
+            table.update(vars(ext), tdb.where('id') == ext.id)
+            self.__model.update_source(ext)
 
     def install_extension(self, ext: Extension):
         def on_ext_downloaded(path):
