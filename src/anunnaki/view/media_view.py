@@ -9,22 +9,30 @@ from PySide6.QtCore import QByteArray, Qt
 from anunnaki.view.media_ui import Ui_media_widget
 from anunnaki_source.models import Media, Kind, Season, Episode, Video, Subtitle
 from anunnaki.controller.browse_ctrl import SourceBridge
+from anunnaki.view.player import MPVWidget
+from anunnaki.view.player.player_controllers import DefaultController
+
 
 class MediaView(QWidget):
     def __init__(self, controller, model, parent) -> None:
         super().__init__(parent)
 
-        self.video: Video = None
+        self.main_window = parent
+
+        self.videos: list[Video] = None
         self.subtitles: list[Subtitle] = None
 
         self.__ui = Ui_media_widget()
         self.__ui.setupUi(self)
+        self.player = MPVWidget(DefaultController, self)
+        self.__ui.media_player.layout().addWidget(self.player)
+        self.player.fullscreen_changed.connect(self.on_player_fullscreen_changed)
+
         self.__controller = controller
         self.__model = model
 
         self.__ui.play_btn.clicked.connect(self.on_play_btn_clicked)
-        self.__ui.videos.currentIndexChanged.connect(self.on_video_reso_changed)
-
+        
         self.__model.ready.connect(self.on_ready)
         self.__model.detail_loaded.connect(self.on_media_detail_loaded)
         self.__model.poster_loaded.connect(self.on_poster_loaded)
@@ -32,6 +40,15 @@ class MediaView(QWidget):
         self.__model.videos_and_subtitles_loaded.connect(self.on_videos_and_subtitles_loaded)
         self.__model.current_episode_changed.connect(self.on_current_episode_changed)
 
+    def on_player_fullscreen_changed(self, state: bool):
+        if state:
+            self.main_window.menuBar().hide()
+            self.main_window.statusBar().hide()
+            self.main_window.showFullScreen()
+        else:
+            self.main_window.menuBar().show()
+            self.main_window.statusBar().show()
+            self.main_window.showNormal()
 
     def on_current_episode_changed(self, episode: Episode):
         self.__ui.play_btn.setEnabled(True)
@@ -39,25 +56,13 @@ class MediaView(QWidget):
         self.__controller.load_subtitles()
 
     def on_videos_and_subtitles_loaded(self, videos: list[Video], subtitles: list[Subtitle]):
-        self.video = None
+        self.videos = videos
         self.subtitles = subtitles
-        self.__ui.videos.clear()
-        for video in videos:
-            self.__ui.videos.addItem(video.resolution.value, video)
-
-    def on_video_reso_changed(self, index: int):
-        self.video = self.__ui.videos.currentData()
-
+        
     def on_play_btn_clicked(self):
-        import subprocess
-        args = ['mpv']
-        args.append(self.video.url)
-
-        for subtitle in self.subtitles:
-            logging.debug(subtitle)
-            args.append(f"--sub-file={subtitle.url}")
-
-        subprocess.run(args)
+        if self.videos is not None:
+            self.__ui.media_stack.setCurrentWidget(self.__ui.media_player)
+            self.player.play(self.videos, self.subtitles)
 
     def on_ready(self):
         self.__controller.load_detail()
